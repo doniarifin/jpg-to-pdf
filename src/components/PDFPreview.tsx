@@ -44,6 +44,8 @@ const PDFPreview: React.FC<Props> = ({
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
+    if (!over) return;
+
     if (active.id !== over?.id) {
       setImages((items: any) => {
         const oldIndex = items.findIndex((i: any) => i.id === active.id);
@@ -59,31 +61,40 @@ const PDFPreview: React.FC<Props> = ({
   };
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={images} strategy={rectSortingStrategy}>
-        <div className="bg-gray-200 p-6 rounded-xl mt-6 flex flex-wrap gap-6 justify-center">
-          {images.map((item, index) => (
-            <div key={item.id} className="flex flex-col items-center">
-              {/* Page */}
-              <div style={{ width, height }}>
-                <SortableItem
-                  id={item.id}
-                  file={item.file}
-                  width={width}
-                  height={height}
-                  margin={margin}
-                  onDelete={() => handleDelete(item.id)}
-                />
-              </div>
+    <>
+      {images.length > 0 && (
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={images.map((i) => i.id)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="bg-gray-200 p-6 rounded-xl mt-6 flex flex-wrap gap-6 justify-center">
+              {images.map((item, index) => (
+                <div key={item.id} className="flex flex-col items-center">
+                  <div style={{ width, height }}>
+                    <SortableItem
+                      id={item.id}
+                      file={item.file}
+                      width={width}
+                      height={height}
+                      margin={margin}
+                      onDelete={() => handleDelete(item.id)}
+                    />
+                  </div>
 
-              <span className="text-xs text-gray-500 mt-2">
-                Page {index + 1}
-              </span>
+                  <span className="text-xs text-gray-500 mt-2">
+                    Page {index + 1}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+          </SortableContext>
+        </DndContext>
+      )}
+    </>
   );
 };
 
