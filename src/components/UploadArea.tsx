@@ -23,7 +23,7 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onChange }) => {
     <label className="w-full h-48 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition hover:border-blue-500 hover:bg-blue-50">
       <div className="text-center">
         <p className="text-gray-600 font-medium">Click here to upload</p>
-        <p className="text-sm text-gray-400 mt-1">JPG files only</p>
+        <p className="text-sm text-gray-400 mt-1">Choose JPG/PNG files</p>
       </div>
 
       <input
