@@ -222,6 +222,7 @@ const Crop = () => {
                   checked={scope === "current"}
                   onChange={() => changeScope("current")}
                   className="accent-brand-600 cursor-pointer"
+                  style={{ colorScheme: "light" }}
                 />
                 Current page
               </label>
@@ -232,6 +233,7 @@ const Crop = () => {
                   checked={scope === "all"}
                   onChange={() => changeScope("all")}
                   className="accent-brand-600 cursor-pointer"
+                  style={{ colorScheme: "light" }}
                 />
                 All pages
               </label>

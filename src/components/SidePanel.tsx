@@ -8,10 +8,10 @@ type SidePanelProps = {
 
 const SidePanel = ({ disabled = false, overlayText, children }: SidePanelProps) => {
   return (
-    <div className="relative">
+    <div className="relative min-h-0">
       <div
         className={`
-          bg-white p-6 rounded-2xl shadow transition h-full
+          bg-white p-6 rounded-2xl shadow transition h-full overflow-y-auto
           ${disabled ? "opacity-50 pointer-events-none" : ""}
         `}
       >

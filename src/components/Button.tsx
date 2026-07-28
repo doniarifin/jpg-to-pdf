@@ -1,14 +1,21 @@
 import React from "react";
 
 type ButtonVariant = "primary" | "secondary" | "gray" | "ghost";
+type ButtonSize = "sm" | "md";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
 }
 
 const baseStyle =
-  "px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2";
+  "rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2";
+
+const sizes: Record<ButtonSize, string> = {
+  sm: "px-3 py-1.5 text-sm",
+  md: "px-5 py-2.5",
+};
 
 const variants: Record<ButtonVariant, string> = {
   primary:
@@ -22,6 +29,7 @@ const variants: Record<ButtonVariant, string> = {
 const Button: React.FC<ButtonProps> = ({
   children,
   variant = "primary",
+  size = "md",
   loading = false,
   disabled,
   className = "",
@@ -31,6 +39,7 @@ const Button: React.FC<ButtonProps> = ({
     <button
       className={`
         ${baseStyle}
+        ${sizes[size]}
         ${variants[variant]}
         ${className}   // ⬅️ ini kuncinya
         ${disabled || loading ? "opacity-50 cursor-not-allowed" : ""}

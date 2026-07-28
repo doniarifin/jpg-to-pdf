@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import Merge from "./pages/Merge";
 import PdfToJpg from "./pages/PdfToJpg";
 import Crop from "./pages/Crop";
+import ImageCompress from "./pages/ImageCompress";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `px-4 py-2 rounded-lg text-sm font-medium transition ${
@@ -43,6 +44,9 @@ function App() {
             </NavLink>
             <NavLink to="/crop" className={navLinkClass}>
               Crop PDF
+            </NavLink>
+            <NavLink to="/compress" className={navLinkClass}>
+              Compress Image
             </NavLink>
           </div>
 
@@ -90,6 +94,13 @@ function App() {
             >
               Crop PDF
             </NavLink>
+            <NavLink
+              to="/compress"
+              className={mobileNavLinkClass}
+              onClick={() => setOpen(false)}
+            >
+              Compress Image
+            </NavLink>
           </div>
         )}
       </nav>
@@ -99,6 +110,7 @@ function App() {
         <Route path="/merge" element={<Merge />} />
         <Route path="/pdf-to-jpg" element={<PdfToJpg />} />
         <Route path="/crop" element={<Crop />} />
+        <Route path="/compress" element={<ImageCompress />} />
       </Routes>
     </div>
   );
