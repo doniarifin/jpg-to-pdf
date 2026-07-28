@@ -29,7 +29,13 @@ function App() {
     <div className="min-h-screen md:h-svh flex flex-col md:overflow-hidden bg-gray-100">
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-6 md:px-10 py-3 flex items-center gap-3">
-          <span className="font-bold text-gray-800 mr-auto">PDF Tools</span>
+          <NavLink
+            to="/"
+            end
+            className="font-bold text-gray-800 mr-auto hover:text-brand-600 transition cursor-pointer"
+          >
+            PDF Tools
+          </NavLink>
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-3">

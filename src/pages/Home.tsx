@@ -126,6 +126,7 @@ const Home = () => {
                   value={margin}
                   onChange={(e) => setMargin(Number(e.target.value))}
                   className="w-full mt-2 cursor-pointer"
+                  style={{ colorScheme: "light" }}
                 />
               </div>
 
