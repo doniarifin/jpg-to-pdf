@@ -187,4 +187,4 @@ If you're planning something substantial, open an issue first so we can discuss 
 
 ## License
 
-This project is for personal or educational use. If you'd like to use it in another context, please open an issue to discuss.
+This project is licensed under the [MIT License](LICENSE).
