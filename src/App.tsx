@@ -7,6 +7,7 @@ import Merge from "./pages/Merge";
 import PdfToJpg from "./pages/PdfToJpg";
 import Crop from "./pages/Crop";
 import ImageCompress from "./pages/ImageCompress";
+import Footer from "./components/Footer";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `px-4 py-2 rounded-lg text-sm font-medium transition ${
@@ -26,7 +27,7 @@ function App() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-screen md:h-svh flex flex-col md:overflow-hidden bg-gray-100">
+    <div className="min-h-screen flex flex-col bg-gray-100">
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-6 md:px-10 py-3 flex items-center gap-3">
           <NavLink
@@ -118,6 +119,7 @@ function App() {
         <Route path="/crop" element={<Crop />} />
         <Route path="/compress" element={<ImageCompress />} />
       </Routes>
+      <Footer />
     </div>
   );
 }
