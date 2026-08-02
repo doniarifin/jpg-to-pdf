@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import PdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import MergeUploadArea from "../components/MergeUploadArea";
@@ -23,6 +23,10 @@ const loadPageCount = async (file: File): Promise<number> => {
 const PT_TO_MM = 25.4 / 72;
 
 const Crop = () => {
+  useEffect(() => {
+    document.title = "Crop PDF | PDF Toolkit";
+  }, []);
+
   const [file, setFile] = useState<File | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);

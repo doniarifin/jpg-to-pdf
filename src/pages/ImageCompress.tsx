@@ -27,6 +27,10 @@ const QUALITY_PRESETS: { label: string; value: number }[] = [
 ];
 
 const ImageCompress = () => {
+  useEffect(() => {
+    document.title = "Compress Image | PDF Toolkit";
+  }, []);
+
   const [images, setImages] = useState<ImageItem[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [scope, setScope] = useState<"current" | "all">("all");

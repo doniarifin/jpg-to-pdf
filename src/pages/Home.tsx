@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import UploadArea from "../components/UploadArea";
 import Button from "../components/Button";
 import { generatePDF } from "../features/pdf/pdfService";
@@ -16,6 +16,10 @@ type ImageItem = {
 };
 
 const Home = () => {
+  useEffect(() => {
+    document.title = "JPG to PDF | PDF Toolkit";
+  }, []);
+
   const handleUpload = (files: File[]) => {
     const newFiles = files.map((file) => ({
       id: crypto.randomUUID(),

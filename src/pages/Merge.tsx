@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MergeUploadArea from "../components/MergeUploadArea";
 import Button from "../components/Button";
 import PDFMergeList, { type PDFItem } from "../components/PDFMergeList";
@@ -8,6 +8,10 @@ import SidePanel from "../components/SidePanel";
 import { mergePDFs } from "../features/pdf/mergeService";
 
 const Merge = () => {
+  useEffect(() => {
+    document.title = "Merge PDF | PDF Toolkit";
+  }, []);
+
   const [pdfs, setPdfs] = useState<PDFItem[]>([]);
   const [merging, setMerging] = useState(false);
   const [error, setError] = useState<string | null>(null);

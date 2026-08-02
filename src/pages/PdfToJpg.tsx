@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MergeUploadArea from "../components/MergeUploadArea";
@@ -21,6 +21,10 @@ const QUALITY_OPTIONS: { value: ImageQuality; label: string; hint: string }[] = 
 type PdfItem = { id: string; file: File };
 
 const PdfToJpg = () => {
+  useEffect(() => {
+    document.title = "PDF to JPG | PDF Toolkit";
+  }, []);
+
   const [pdfs, setPdfs] = useState<PdfItem[]>([]);
   const [quality, setQuality] = useState<ImageQuality>("medium");
   const [converting, setConverting] = useState(false);
