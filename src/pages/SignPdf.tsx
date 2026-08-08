@@ -12,6 +12,7 @@ import {
   signPdf,
   toPngDataUrl,
   getImageRatio,
+  removeWhitePreview,
   type SignaturePlacement,
 } from "../features/pdf/signatureService";
 
@@ -35,15 +36,34 @@ const SignPdf = () => {
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [signature, setSignature] = useState<string | null>(null);
+  const [previewSignature, setPreviewSignature] = useState<string | null>(null);
   const [signatureRatio, setSignatureRatio] = useState(2);
   const [signWidth, setSignWidth] = useState(150);
+  const [opacity, setOpacity] = useState(100);
   const [placements, setPlacements] = useState<
     Map<number, SignaturePlacement>
   >(new Map());
-  const [placing, setPlacing] = useState(false);
   const [signing, setSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const signatureInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!signature) {
+      setPreviewSignature(null);
+      return;
+    }
+    if (opacity >= 100) {
+      setPreviewSignature(signature);
+      return;
+    }
+    let cancelled = false;
+    removeWhitePreview(signature, 1 - opacity / 100).then((url) => {
+      if (!cancelled) setPreviewSignature(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [signature, opacity]);
 
   const handleUpload = async (files: File[]) => {
     const f = files[0];
@@ -52,7 +72,6 @@ const SignPdf = () => {
     setFile(f);
     setPageNumber(1);
     setPlacements(new Map());
-    setPlacing(false);
     try {
       setNumPages(await loadPageCount(f));
     } catch {
@@ -104,6 +123,17 @@ const SignPdf = () => {
     });
   };
 
+  const moveAt = (x: number, y: number) => {
+    if (!signature) return;
+    const w = signWidth;
+    const h = signWidth / signatureRatio;
+    setPlacements((prev) => {
+      const next = new Map(prev);
+      next.set(pageNumber, { x, y, width: w, height: h });
+      return next;
+    });
+  };
+
   const removeCurrent = () => {
     setPlacements((prev) => {
       const next = new Map(prev);
@@ -117,7 +147,7 @@ const SignPdf = () => {
     setError(null);
     setSigning(true);
     try {
-      await signPdf(file, signature, placements);
+      await signPdf(file, signature, placements, opacity / 100);
     } catch (err) {
       console.error(err);
       setError(
@@ -186,10 +216,10 @@ const SignPdf = () => {
                   <SignaturePlaceCanvas
                     file={file}
                     pageNumber={pageNumber}
-                    signature={signature}
+                    signature={previewSignature}
                     placement={currentPlacement}
-                    placing={placing}
                     onPlace={placeAt}
+                    onMove={moveAt}
                     onRemove={removeCurrent}
                   />
                 </div>
@@ -257,7 +287,12 @@ const SignPdf = () => {
                 <img
                   src={signature}
                   alt="Signature"
-                  className="w-28 h-auto bg-white rounded-lg border border-gray-200"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/plain", signature);
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
+                  className="w-28 h-auto bg-white rounded-lg border border-gray-200 cursor-grab active:cursor-grabbing"
                 />
                 <div className="flex flex-col gap-2">
                   <Button
@@ -304,14 +339,30 @@ const SignPdf = () => {
           </div>
 
           <div className="mt-4">
+            <label className="text-sm text-gray-500">
+              Remove white: {opacity}%
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={opacity}
+              onChange={(e) => setOpacity(Number(e.target.value))}
+              className="w-full mt-2 cursor-pointer"
+              style={{ colorScheme: "light" }}
+            />
+          </div>
+
+          <div className="mt-4">
             <Button
-              variant={placing ? "primary" : "secondary"}
+              variant={signature ? "primary" : "secondary"}
               size="md"
               className={`w-full cursor-pointer`}
               disabled={!signature}
-              onClick={() => setPlacing((v) => !v)}
             >
-              {placing ? "Click the page to place" : "Place on page"}
+              {signature
+                ? "Drag the signature onto the page"
+                : "Add a signature above"}
             </Button>
           </div>
 
