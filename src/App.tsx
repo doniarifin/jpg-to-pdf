@@ -7,6 +7,7 @@ import Merge from "./pages/Merge";
 import PdfToJpg from "./pages/PdfToJpg";
 import Crop from "./pages/Crop";
 import ImageCompress from "./pages/ImageCompress";
+import SignPdf from "./pages/SignPdf";
 import Footer from "./components/Footer";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -51,6 +52,9 @@ function App() {
             </NavLink>
             <NavLink to="/crop" className={navLinkClass}>
               Crop PDF
+            </NavLink>
+            <NavLink to="/sign" className={navLinkClass}>
+              Sign PDF
             </NavLink>
             <NavLink to="/compress" className={navLinkClass}>
               Compress Image
@@ -102,6 +106,13 @@ function App() {
               Crop PDF
             </NavLink>
             <NavLink
+              to="/sign"
+              className={mobileNavLinkClass}
+              onClick={() => setOpen(false)}
+            >
+              Sign PDF
+            </NavLink>
+            <NavLink
               to="/compress"
               className={mobileNavLinkClass}
               onClick={() => setOpen(false)}
@@ -117,6 +128,7 @@ function App() {
         <Route path="/merge" element={<Merge />} />
         <Route path="/pdf-to-jpg" element={<PdfToJpg />} />
         <Route path="/crop" element={<Crop />} />
+        <Route path="/sign" element={<SignPdf />} />
         <Route path="/compress" element={<ImageCompress />} />
       </Routes>
       <Footer />

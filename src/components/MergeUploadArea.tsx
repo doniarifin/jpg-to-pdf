@@ -5,11 +5,15 @@ import { faFilePdf, faPlus } from "@fortawesome/free-solid-svg-icons";
 interface MergeUploadAreaProps {
   onChange: (files: File[]) => void;
   compact?: boolean;
+  title?: string;
+  hint?: string;
 }
 
 const MergeUploadArea: React.FC<MergeUploadAreaProps> = ({
   onChange,
   compact,
+  title = "Click here to upload PDFs",
+  hint = "Choose PDF files",
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -61,8 +65,8 @@ const MergeUploadArea: React.FC<MergeUploadAreaProps> = ({
           size="2x"
           className="text-red-500 mb-2"
         />
-        <p className="text-gray-600 font-medium">Click here to upload PDFs</p>
-        <p className="text-sm text-gray-400 mt-1">Choose PDF files to merge</p>
+        <p className="text-gray-600 font-medium">{title}</p>
+        <p className="text-sm text-gray-400 mt-1">{hint}</p>
       </div>
 
       {fileInput}
