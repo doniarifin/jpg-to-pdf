@@ -44,6 +44,7 @@ const SignPdf = () => {
     Map<number, SignaturePlacement>
   >(new Map());
   const [signing, setSigning] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const signatureInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -142,6 +143,15 @@ const SignPdf = () => {
     });
   };
 
+  const resizeAt = (x: number, y: number, width: number, height: number) => {
+    setPlacements((prev) => {
+      const next = new Map(prev);
+      if (!next.has(pageNumber)) return prev;
+      next.set(pageNumber, { x, y, width, height });
+      return next;
+    });
+  };
+
   const handleSign = async () => {
     if (!file || !signature) return;
     setError(null);
@@ -187,7 +197,7 @@ const SignPdf = () => {
             {file && (
               <>
                 {/* Page navigation */}
-                <div className="flex items-center justify-center gap-4 mb-4">
+                <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
                   <button
                     type="button"
                     onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
@@ -209,6 +219,17 @@ const SignPdf = () => {
                   >
                     Next
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode((v) => !v)}
+                    className={`px-3 py-1 rounded-lg border text-sm cursor-pointer transition ${
+                      previewMode
+                        ? "bg-brand-600 text-white border-brand-600 hover:bg-brand-700"
+                        : "border-gray-300 hover:bg-gray-100"
+                    }`}
+                  >
+                    {previewMode ? "Exit preview" : "Preview result"}
+                  </button>
                 </div>
 
                 {/* Interactive preview */}
@@ -218,8 +239,10 @@ const SignPdf = () => {
                     pageNumber={pageNumber}
                     signature={previewSignature}
                     placement={currentPlacement}
+                    preview={previewMode}
                     onPlace={placeAt}
                     onMove={moveAt}
+                    onResize={resizeAt}
                     onRemove={removeCurrent}
                   />
                 </div>

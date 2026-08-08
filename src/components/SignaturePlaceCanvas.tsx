@@ -12,20 +12,25 @@ interface Props {
   pageNumber: number;
   signature: string | null;
   placement: SignaturePlacement | null;
+  preview?: boolean;
   onPlace: (x: number, y: number) => void;
   onMove: (x: number, y: number) => void;
+  onResize: (x: number, y: number, width: number, height: number) => void;
   onRemove: () => void;
 }
 
 const TARGET_WIDTH = 680;
+const MIN_SIZE = 20;
 
 const SignaturePlaceCanvas = ({
   file,
   pageNumber,
   signature,
   placement,
+  preview = false,
   onPlace,
   onMove,
+  onResize,
   onRemove,
 }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -37,7 +42,9 @@ const SignaturePlaceCanvas = ({
     origX: number;
     origY: number;
   } | null>(null);
+  const resizeRef = useRef<{ anchorX: number; anchorY: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [view, setView] = useState<{
     viewport: pdfjsLib.PageViewport;
     scale: number;
@@ -128,14 +135,15 @@ const SignaturePlaceCanvas = ({
   }, [view?.width, view?.height]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    if (!signature || !e.dataTransfer.types.includes("text/plain")) return;
+    if (preview || !signature || !e.dataTransfer.types.includes("text/plain"))
+      return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "copy";
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (!signature) return;
+    if (preview || !signature) return;
     const dragged = e.dataTransfer.getData("text/plain");
     if (!dragged || dragged !== signature) return;
     const viewport = viewportRef.current;
@@ -194,6 +202,45 @@ const SignaturePlaceCanvas = ({
     setIsDragging(false);
   }, []);
 
+  const handleResizeStart = useCallback(
+    (e: React.PointerEvent) => {
+      if (!placement || !view) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      resizeRef.current = {
+        anchorX: placement.x,
+        anchorY: placement.y + placement.height,
+      };
+      setIsResizing(true);
+    },
+    [placement, view],
+  );
+
+  const handleResizeMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!resizeRef.current || !view || !placement) return;
+      const container = containerRef.current;
+      const canvas = canvasRef.current;
+      if (!container || !canvas) return;
+      const rect = container.getBoundingClientRect();
+      const px = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const py = (e.clientY - rect.top) * (canvas.height / rect.height);
+      const [pdfX, pdfY] = view.viewport.convertToPdfPoint(px, py);
+      const { anchorX, anchorY } = resizeRef.current;
+      const minPdf = MIN_SIZE / view.scale;
+      const width = Math.max(minPdf, pdfX - anchorX);
+      const height = Math.max(minPdf, anchorY - pdfY);
+      onResize(anchorX, anchorY - height, width, height);
+    },
+    [view, placement, onResize],
+  );
+
+  const handleResizeEnd = useCallback(() => {
+    resizeRef.current = null;
+    setIsResizing(false);
+  }, []);
+
   let overlay: { left: number; top: number; width: number; height: number } | null =
     null;
   if (placement && signature && view) {
@@ -215,57 +262,81 @@ const SignaturePlaceCanvas = ({
       ref={containerRef}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className={`relative rounded-xl overflow-hidden shadow-sm ${
-        signature ? "cursor-copy" : ""
-      }`}
+      className={`relative rounded-xl shadow-sm ${signature ? "cursor-copy" : ""}`}
     >
       <canvas
         ref={canvasRef}
-        className="block max-w-full h-auto"
+        className="block max-w-full h-auto rounded-xl"
         style={{ width: view?.width, height: view?.height }}
       />
 
-      {overlay && (
-        <div
-          className="absolute border-2 border-dashed border-brand-500 bg-brand-500/10 overflow-hidden group touch-none"
-          style={{
-            left: overlay.left,
-            top: overlay.top,
-            width: overlay.width,
-            height: overlay.height,
-            cursor: isDragging ? "grabbing" : "grab",
-          }}
-          onPointerDown={handleDragStart}
-          onPointerMove={handleDragMove}
-          onPointerUp={handleDragEnd}
-        >
-          <img
-            src={signature!}
-            alt="Signature"
-            className="w-full h-full object-fill block pointer-events-none"
-          />
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
+      {overlay &&
+        (preview ? (
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              left: overlay.left,
+              top: overlay.top,
+              width: overlay.width,
+              height: overlay.height,
             }}
-            onPointerDown={(e) => e.stopPropagation()}
-            aria-label="Remove signature"
-            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center hover:bg-red-600 cursor-pointer transition"
           >
-            <FontAwesomeIcon icon={faXmark} />
-          </button>
-        </div>
-      )}
+            <img
+              src={signature!}
+              alt="Signature"
+              className="w-full h-full object-fill block"
+            />
+          </div>
+        ) : (
+          <div
+            className="absolute border-2 border-dashed border-brand-500 bg-brand-500/10 overflow-visible group touch-none select-none"
+            style={{
+              left: overlay.left,
+              top: overlay.top,
+              width: overlay.width,
+              height: overlay.height,
+              cursor: isDragging ? "grabbing" : isResizing ? "nwse-resize" : "grab",
+            }}
+            onPointerDown={handleDragStart}
+            onPointerMove={handleDragMove}
+            onPointerUp={handleDragEnd}
+          >
+            <img
+              src={signature!}
+              alt="Signature"
+              className="w-full h-full object-fill block pointer-events-none"
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              aria-label="Remove signature"
+              className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center hover:bg-red-600 cursor-pointer transition shadow-md"
+            >
+              <FontAwesomeIcon icon={faXmark} />
+            </button>
+            <span
+              role="button"
+              tabIndex={0}
+              aria-label="Resize signature"
+              className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-brand-600 rounded-sm cursor-nwse-resize touch-none border border-white"
+              onPointerDown={handleResizeStart}
+              onPointerMove={handleResizeMove}
+              onPointerUp={handleResizeEnd}
+            />
+          </div>
+        ))}
 
-      {placement && signature && (
+      {!preview && placement && signature && (
         <p className="absolute top-2 left-2 px-2 py-1 rounded-md bg-gray-900/70 text-white text-xs pointer-events-none">
-          Drag to move · click ✕ to remove
+          Drag to move · resize the corner · click ✕ to remove
         </p>
       )}
 
-      {!placement && signature && (
+      {!preview && !placement && signature && (
         <p className="absolute top-2 left-2 px-2 py-1 rounded-md bg-gray-900/70 text-white text-xs pointer-events-none">
           Drag your signature here to place it
         </p>
