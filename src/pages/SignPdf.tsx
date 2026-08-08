@@ -310,12 +310,8 @@ const SignPdf = () => {
                 <img
                   src={signature}
                   alt="Signature"
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", signature);
-                    e.dataTransfer.effectAllowed = "copy";
-                  }}
-                  className="w-28 h-auto bg-white rounded-lg border border-gray-200 cursor-grab active:cursor-grabbing"
+                  draggable={false}
+                  className="w-20 h-auto bg-white rounded-lg border border-gray-200"
                 />
                 <div className="flex flex-col gap-2">
                   <Button
@@ -363,7 +359,7 @@ const SignPdf = () => {
 
           <div className="mt-4">
             <label className="text-sm text-gray-500">
-              Remove white: {opacity}%
+              Transaparent (remove white background): {opacity}%
             </label>
             <input
               type="range"
@@ -376,18 +372,44 @@ const SignPdf = () => {
             />
           </div>
 
-          <div className="mt-4">
-            <Button
-              variant={signature ? "primary" : "secondary"}
-              size="md"
-              className={`w-full cursor-pointer`}
-              disabled={!signature}
-            >
-              {signature
-                ? "Drag the signature onto the page"
-                : "Add a signature above"}
-            </Button>
-          </div>
+          {signature ? (
+            <div className="mt-4 relative">
+              <div
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("text/plain", signature);
+                  e.dataTransfer.effectAllowed = "copy";
+                }}
+                title="Drag the signature onto the page"
+                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-brand-600 bg-brand-500/5 cursor-grab active:cursor-grabbing select-none touch-none hover:bg-brand-500/10 transition"
+              >
+                <img
+                  src={signature}
+                  alt="Signature"
+                  draggable={false}
+                  className="w-24 h-auto bg-white rounded-lg border border-gray-200 pointer-events-none"
+                />
+                <span className="text-xs font-medium text-brand-700">
+                  Drag the signature onto the page
+                </span>
+              </div>
+              <span className="absolute -top-1 -left-1 w-2.5 h-2.5 rotate-45 bg-white border-2 border-brand-600 rounded-[2px]" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rotate-45 bg-white border-2 border-brand-600 rounded-[2px]" />
+              <span className="absolute -bottom-1 -left-1 w-2.5 h-2.5 rotate-45 bg-white border-2 border-brand-600 rounded-[2px]" />
+              <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 bg-white border-2 border-brand-600 rounded-[2px]" />
+            </div>
+          ) : (
+            <div className="mt-4">
+              <Button
+                variant="secondary"
+                size="md"
+                className="w-full cursor-pointer"
+                disabled
+              >
+                Add a signature above
+              </Button>
+            </div>
+          )}
 
           {currentPlacement && (
             <Button
