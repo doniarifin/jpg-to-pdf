@@ -13,6 +13,7 @@ import {
   toPngDataUrl,
   getImageRatio,
   removeWhitePreview,
+  SIGNATURE_DRAG_TYPE,
   type SignaturePlacement,
 } from "../features/pdf/signatureService";
 
@@ -377,7 +378,7 @@ const SignPdf = () => {
               <div
                 draggable
                 onDragStart={(e) => {
-                  e.dataTransfer.setData("text/plain", signature);
+                  e.dataTransfer.setData(SIGNATURE_DRAG_TYPE, "1");
                   e.dataTransfer.effectAllowed = "copy";
                 }}
                 title="Drag the signature onto the page"
@@ -387,7 +388,7 @@ const SignPdf = () => {
                   src={signature}
                   alt="Signature"
                   draggable={false}
-                  className="w-24 h-auto bg-white rounded-lg border border-gray-200 pointer-events-none"
+                  className="w-34 h-auto bg-white rounded-lg border border-gray-200 pointer-events-none"
                 />
                 <span className="text-xs font-medium text-brand-700">
                   Drag the signature onto the page

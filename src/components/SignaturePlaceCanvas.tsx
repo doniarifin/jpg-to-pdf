@@ -3,7 +3,10 @@ import * as pdfjsLib from "pdfjs-dist";
 import PdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
-import type { SignaturePlacement } from "../features/pdf/signatureService";
+import {
+  SIGNATURE_DRAG_TYPE,
+  type SignaturePlacement,
+} from "../features/pdf/signatureService";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = PdfWorker;
 
@@ -134,18 +137,24 @@ const SignaturePlaceCanvas = ({
     return () => observer.disconnect();
   }, [view?.width, view?.height]);
 
+  const hasSignatureDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    if (e.dataTransfer.types.includes(SIGNATURE_DRAG_TYPE)) return true;
+    try {
+      return Boolean(e.dataTransfer.getData(SIGNATURE_DRAG_TYPE));
+    } catch {
+      return false;
+    }
+  };
+
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    if (preview || !signature || !e.dataTransfer.types.includes("text/plain"))
-      return;
+    if (preview || !signature || !hasSignatureDrag(e)) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "copy";
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (preview || !signature) return;
-    const dragged = e.dataTransfer.getData("text/plain");
-    if (!dragged || dragged !== signature) return;
+    if (preview || !signature || !hasSignatureDrag(e)) return;
     const viewport = viewportRef.current;
     const canvas = canvasRef.current;
     if (!viewport || !canvas) return;

@@ -8,6 +8,9 @@ export interface SignaturePlacement {
   height: number;
 }
 
+/** Custom MIME type used to identify our signature drag payload. */
+export const SIGNATURE_DRAG_TYPE = "application/x-pdf-toolkit-signature";
+
 const triggerDownload = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
