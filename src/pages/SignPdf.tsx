@@ -53,7 +53,22 @@ const SignPdf = () => {
   const [previewMode, setPreviewMode] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const signatureInputRef = useRef<HTMLInputElement | null>(null);
+  const toastTimeoutRef = useRef<number | null>(null);
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = window.setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -403,6 +418,13 @@ const SignPdf = () => {
                     <div
                       draggable
                       onDragStart={(e) => {
+                        if (previewMode) {
+                          e.preventDefault();
+                          showToast(
+                            "Exit preview mode first to drag the signature onto the page",
+                          );
+                          return;
+                        }
                         e.dataTransfer.setData(SIGNATURE_DRAG_TYPE, sig.id);
                         e.dataTransfer.effectAllowed = "copy";
                       }}
@@ -537,6 +559,12 @@ const SignPdf = () => {
           </div>
         </SidePanel>
       </div>
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-gray-900/90 text-white text-sm shadow-lg pointer-events-none whitespace-nowrap">
+          {toast}
+        </div>
+      )}
     </div>
   );
 };
