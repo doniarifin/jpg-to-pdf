@@ -14,6 +14,7 @@ import {
   getImageRatio,
   removeWhitePreview,
   SIGNATURE_DRAG_TYPE,
+  type PdfSignature,
   type SignaturePlacement,
 } from "../features/pdf/signatureService";
 
@@ -36,36 +37,49 @@ const SignPdf = () => {
   const [file, setFile] = useState<File | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
-  const [signature, setSignature] = useState<string | null>(null);
-  const [previewSignature, setPreviewSignature] = useState<string | null>(null);
-  const [signatureRatio, setSignatureRatio] = useState(2);
+  const [signatures, setSignatures] = useState<PdfSignature[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<Map<string, string>>(
+    new Map(),
+  );
+  const [activeSignatureId, setActiveSignatureId] = useState<string | null>(
+    null,
+  );
   const [signWidth, setSignWidth] = useState(150);
   const [opacity, setOpacity] = useState(100);
   const [placements, setPlacements] = useState<
-    Map<number, SignaturePlacement>
+    Map<number, Map<string, SignaturePlacement>>
   >(new Map());
   const [signing, setSigning] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const signatureInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (!signature) {
-      setPreviewSignature(null);
-      return;
-    }
-    if (opacity >= 100) {
-      setPreviewSignature(signature);
-      return;
-    }
     let cancelled = false;
-    removeWhitePreview(signature, 1 - opacity / 100).then((url) => {
-      if (!cancelled) setPreviewSignature(url);
-    });
+    const recompute = async () => {
+      const next = new Map<string, string>();
+      for (const sig of signatures) {
+        if (opacity >= 100) {
+          next.set(sig.id, sig.dataUrl);
+        } else {
+          try {
+            next.set(
+              sig.id,
+              await removeWhitePreview(sig.dataUrl, 1 - opacity / 100),
+            );
+          } catch {
+            next.set(sig.id, sig.dataUrl);
+          }
+        }
+      }
+      if (!cancelled) setPreviewUrls(next);
+    };
+    recompute();
     return () => {
       cancelled = true;
     };
-  }, [signature, opacity]);
+  }, [signatures, opacity]);
 
   const handleUpload = async (files: File[]) => {
     const f = files[0];
@@ -82,19 +96,17 @@ const SignPdf = () => {
     }
   };
 
-  const setSignatureFromDataUrl = useCallback(async (dataUrl: string) => {
+  const addSignature = useCallback(async (dataUrl: string) => {
     try {
       const ratio = await getImageRatio(dataUrl);
-      setSignature(dataUrl);
-      setSignatureRatio(ratio || 1);
+      const id = crypto.randomUUID();
+      setSignatures((prev) => [...prev, { id, dataUrl, ratio }]);
+      setActiveSignatureId(id);
+      setShowDrawer(false);
     } catch {
       setError("Could not load that signature image.");
     }
   }, []);
-
-  const handleDrawSave = (dataUrl: string) => {
-    setSignatureFromDataUrl(dataUrl);
-  };
 
   const handleSignatureUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -106,7 +118,7 @@ const SignPdf = () => {
     reader.onload = async () => {
       const dataUrl = String(reader.result);
       try {
-        setSignatureFromDataUrl(await toPngDataUrl(dataUrl));
+        await addSignature(await toPngDataUrl(dataUrl));
       } catch {
         setError("Could not load that signature image.");
       }
@@ -114,51 +126,90 @@ const SignPdf = () => {
     reader.readAsDataURL(f);
   };
 
-  const placeAt = (x: number, y: number) => {
-    if (!signature) return;
+  const removeSignature = (signatureId: string) => {
+    setSignatures((prev) => prev.filter((s) => s.id !== signatureId));
+    setPlacements((prev) => {
+      const next = new Map<number, Map<string, SignaturePlacement>>();
+      for (const [page, pageMap] of prev) {
+        const pm = new Map(pageMap);
+        pm.delete(signatureId);
+        if (pm.size > 0) next.set(page, pm);
+      }
+      return next;
+    });
+    setActiveSignatureId((prev) => (prev === signatureId ? null : prev));
+  };
+
+  const placeAt = (signatureId: string, x: number, y: number) => {
+    const sig = signatures.find((s) => s.id === signatureId);
+    if (!sig) return;
     const w = signWidth;
-    const h = signWidth / signatureRatio;
+    const h = signWidth / sig.ratio;
     setPlacements((prev) => {
       const next = new Map(prev);
-      next.set(pageNumber, { x: x - w / 2, y: y - h / 2, width: w, height: h });
+      const pageMap = new Map(next.get(pageNumber) ?? new Map());
+      pageMap.set(signatureId, {
+        signatureId,
+        x: x - w / 2,
+        y: y - h / 2,
+        width: w,
+        height: h,
+      });
+      next.set(pageNumber, pageMap);
+      return next;
+    });
+    setActiveSignatureId(signatureId);
+  };
+
+  const moveAt = (signatureId: string, x: number, y: number) => {
+    setPlacements((prev) => {
+      const pageMap = new Map(prev.get(pageNumber) ?? new Map());
+      const p = pageMap.get(signatureId);
+      if (!p) return prev;
+      pageMap.set(signatureId, { ...p, x, y });
+      const next = new Map(prev);
+      next.set(pageNumber, pageMap);
       return next;
     });
   };
 
-  const moveAt = (x: number, y: number) => {
-    if (!signature) return;
-    const w = signWidth;
-    const h = signWidth / signatureRatio;
+  const resizeAt = (
+    signatureId: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ) => {
     setPlacements((prev) => {
+      const pageMap = new Map(prev.get(pageNumber) ?? new Map());
+      if (!pageMap.has(signatureId)) return prev;
+      pageMap.set(signatureId, { x, y, width, height });
       const next = new Map(prev);
-      next.set(pageNumber, { x, y, width: w, height: h });
+      next.set(pageNumber, pageMap);
       return next;
     });
   };
 
-  const removeCurrent = () => {
+  const removeCurrentPlacement = (signatureId: string) => {
     setPlacements((prev) => {
+      const pageMap = new Map(prev.get(pageNumber) ?? new Map());
+      if (!pageMap.delete(signatureId)) return prev;
       const next = new Map(prev);
-      next.delete(pageNumber);
-      return next;
-    });
-  };
-
-  const resizeAt = (x: number, y: number, width: number, height: number) => {
-    setPlacements((prev) => {
-      const next = new Map(prev);
-      if (!next.has(pageNumber)) return prev;
-      next.set(pageNumber, { x, y, width, height });
+      if (pageMap.size === 0) {
+        next.delete(pageNumber);
+      } else {
+        next.set(pageNumber, pageMap);
+      }
       return next;
     });
   };
 
   const handleSign = async () => {
-    if (!file || !signature) return;
+    if (!file || signatures.length === 0) return;
     setError(null);
     setSigning(true);
     try {
-      await signPdf(file, signature, placements, opacity / 100);
+      await signPdf(file, signatures, placements, opacity / 100);
     } catch (err) {
       console.error(err);
       setError(
@@ -170,8 +221,27 @@ const SignPdf = () => {
   };
 
   const isDisabled = !file;
-  const currentPlacement = placements.get(pageNumber) ?? null;
-  const signedCount = placements.size;
+  const drawerOpen = signatures.length === 0 || showDrawer;
+  const pagePlacements = placements.get(pageNumber) ?? new Map();
+  const pagePlacementList = Array.from(pagePlacements.values());
+  const currentPlacement = activeSignatureId
+    ? pagePlacements.get(activeSignatureId) ?? null
+    : null;
+
+  let signedCount = 0;
+  let totalPlacements = 0;
+  placements.forEach((pm) => {
+    if (pm.size > 0) signedCount++;
+    totalPlacements += pm.size;
+  });
+
+  const pagesFor = (signatureId: string) => {
+    const pages: number[] = [];
+    for (const [page, pm] of placements) {
+      if (pm.has(signatureId)) pages.push(page);
+    }
+    return pages;
+  };
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto md:overflow-hidden px-6 md:px-10 py-6 scroll-area">
@@ -238,13 +308,18 @@ const SignPdf = () => {
                   <SignaturePlaceCanvas
                     file={file}
                     pageNumber={pageNumber}
-                    signature={previewSignature}
-                    placement={currentPlacement}
+                    signatures={signatures.map((s) => ({
+                      id: s.id,
+                      dataUrl: previewUrls.get(s.id) ?? s.dataUrl,
+                    }))}
+                    placements={pagePlacementList}
+                    activeSignatureId={activeSignatureId}
                     preview={previewMode}
+                    onSelect={setActiveSignatureId}
                     onPlace={placeAt}
                     onMove={moveAt}
                     onResize={resizeAt}
-                    onRemove={removeCurrent}
+                    onRemove={removeCurrentPlacement}
                   />
                 </div>
 
@@ -262,9 +337,9 @@ const SignPdf = () => {
                       }`}
                     >
                       <PDFThumbnail file={file} className="w-14 h-auto block" />
-                      {placements.has(n) && (
+                      {placements.get(n)?.size ? (
                         <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-yellow-400 border border-white" />
-                      )}
+                      ) : null}
                     </button>
                   ))}
                 </div>
@@ -279,9 +354,9 @@ const SignPdf = () => {
         <SidePanel disabled={isDisabled} overlayText="Please choose a file first">
           <h2 className="text-xl font-semibold mb-4">Signature</h2>
 
-          {!signature ? (
-            <>
-              <SignatureDrawer onSave={handleDrawSave} />
+          {drawerOpen && (
+            <div className="flex flex-col">
+              <SignatureDrawer onSave={addSignature} />
 
               <div className="my-4 flex items-center gap-3">
                 <span className="h-px flex-1 bg-gray-200" />
@@ -297,51 +372,102 @@ const SignPdf = () => {
               >
                 Upload signature image
               </Button>
-              <input
-                ref={signatureInputRef}
-                type="file"
-                accept="image/png,image/jpeg"
-                className="hidden"
-                onChange={handleSignatureUpload}
-              />
-            </>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-100">
-                <img
-                  src={signature}
-                  alt="Signature"
-                  draggable={false}
-                  className="w-20 h-auto bg-white rounded-lg border border-gray-200"
-                />
-                <div className="flex flex-col gap-2">
-                  <Button
-                    variant="gray"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => signatureInputRef.current?.click()}
-                  >
-                    Replace
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="cursor-pointer text-red-600"
-                    onClick={() => setSignature(null)}
-                  >
-                    Clear
-                  </Button>
-                </div>
-              </div>
-              <input
-                ref={signatureInputRef}
-                type="file"
-                accept="image/png,image/jpeg"
-                className="hidden"
-                onChange={handleSignatureUpload}
-              />
+
+              {signatures.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 cursor-pointer"
+                  onClick={() => setShowDrawer(false)}
+                >
+                  Back to signatures
+                </Button>
+              )}
             </div>
           )}
+
+          {signatures.length > 0 && (
+            <div className="mt-4 flex flex-col gap-3">
+              {signatures.map((sig) => {
+                const pages = pagesFor(sig.id);
+                return (
+                  <div
+                    key={sig.id}
+                    onClick={() => setActiveSignatureId(sig.id)}
+                    className={`p-3 rounded-xl bg-white border transition cursor-pointer ${
+                      sig.id === activeSignatureId
+                        ? "border-brand-600 ring-1 ring-brand-600"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData(SIGNATURE_DRAG_TYPE, sig.id);
+                        e.dataTransfer.effectAllowed = "copy";
+                      }}
+                      title="Drag the signature onto the page"
+                      className="flex items-center justify-center p-3 rounded-lg border-2 border-dashed border-brand-600 bg-brand-500/5 cursor-grab active:cursor-grabbing select-none touch-none hover:bg-brand-500/10 transition"
+                    >
+                      <img
+                        src={previewUrls.get(sig.id) ?? sig.dataUrl}
+                        alt="Signature"
+                        draggable={false}
+                        className="w-28 h-auto bg-white rounded border border-gray-200 pointer-events-none"
+                      />
+                    </div>
+                    <p className="mt-2 text-center text-xs font-medium text-brand-700 pointer-events-none">
+                      Drag the signature onto the page
+                    </p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs text-gray-500">
+                        {pages.length} page{pages.length === 1 ? "" : "s"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSignature(sig.id);
+                        }}
+                        className="text-xs text-red-600 hover:text-red-700 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {!drawerOpen && (
+            <div className="mt-4 flex gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                className="flex-1 cursor-pointer"
+                onClick={() => setShowDrawer(true)}
+              >
+                Draw new
+              </Button>
+              <Button
+                variant="gray"
+                size="sm"
+                className="flex-1 cursor-pointer"
+                onClick={() => signatureInputRef.current?.click()}
+              >
+                Upload
+              </Button>
+            </div>
+          )}
+
+          <input
+            ref={signatureInputRef}
+            type="file"
+            accept="image/png,image/jpeg"
+            className="hidden"
+            onChange={handleSignatureUpload}
+          />
 
           <div className="mt-4">
             <label className="text-sm text-gray-500">
@@ -373,51 +499,12 @@ const SignPdf = () => {
             />
           </div>
 
-          {signature ? (
-            <div className="mt-4 relative">
-              <div
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData(SIGNATURE_DRAG_TYPE, "1");
-                  e.dataTransfer.effectAllowed = "copy";
-                }}
-                title="Drag the signature onto the page"
-                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-brand-600 bg-brand-500/5 cursor-grab active:cursor-grabbing select-none touch-none hover:bg-brand-500/10 transition"
-              >
-                <img
-                  src={signature}
-                  alt="Signature"
-                  draggable={false}
-                  className="w-34 h-auto bg-white rounded-lg border border-gray-200 pointer-events-none"
-                />
-                <span className="text-xs font-medium text-brand-700">
-                  Drag the signature onto the page
-                </span>
-              </div>
-              <span className="absolute -top-1 -left-1 w-2.5 h-2.5 rotate-45 bg-white border-2 border-brand-600 rounded-[2px]" />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rotate-45 bg-white border-2 border-brand-600 rounded-[2px]" />
-              <span className="absolute -bottom-1 -left-1 w-2.5 h-2.5 rotate-45 bg-white border-2 border-brand-600 rounded-[2px]" />
-              <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rotate-45 bg-white border-2 border-brand-600 rounded-[2px]" />
-            </div>
-          ) : (
-            <div className="mt-4">
-              <Button
-                variant="secondary"
-                size="md"
-                className="w-full cursor-pointer"
-                disabled
-              >
-                Add a signature above
-              </Button>
-            </div>
-          )}
-
           {currentPlacement && (
             <Button
               variant="ghost"
               size="sm"
               className="w-full mt-2 cursor-pointer text-red-600"
-              onClick={removeCurrent}
+              onClick={() => removeCurrentPlacement(activeSignatureId!)}
             >
               Remove from this page
             </Button>
@@ -425,7 +512,8 @@ const SignPdf = () => {
 
           <p className="mt-4 text-sm text-gray-600">
             {signedCount} of {numPages} page
-            {signedCount === 1 ? "" : "s"} signed
+            {signedCount === 1 ? "" : "s"} signed · {totalPlacements} signature
+            {totalPlacements === 1 ? "" : "s"} placed
           </p>
 
           {error && (
@@ -439,7 +527,9 @@ const SignPdf = () => {
               variant="secondary"
               className="w-full cursor-pointer"
               loading={signing}
-              disabled={!signature || signedCount === 0 || signing}
+              disabled={
+                signatures.length === 0 || signedCount === 0 || signing
+              }
               onClick={handleSign}
             >
               Sign &amp; Download

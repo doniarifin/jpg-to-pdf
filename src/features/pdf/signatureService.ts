@@ -2,10 +2,18 @@ import { PDFDocument } from "pdf-lib";
 
 /** Signature placement in PDF user-space points (bottom-left origin). */
 export interface SignaturePlacement {
+  signatureId: string;
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+/** A signature image (drawn or uploaded) that can be placed on pages. */
+export interface PdfSignature {
+  id: string;
+  dataUrl: string;
+  ratio: number;
 }
 
 /** Custom MIME type used to identify our signature drag payload. */
@@ -142,39 +150,53 @@ export const removeWhitePreview = (
   });
 
 /**
- * Embed `signatureDataUrl` (PNG) on every page listed in `placements`
- * (keyed by 1-based page number) and download the result.
+ * Embed every signature on the pages listed in `placements`
+ * (page number 1-based -> signature id -> placement) and download the result.
  */
 export const signPdf = async (
   file: File,
-  signatureDataUrl: string,
-  placements: Map<number, SignaturePlacement>,
+  signatures: PdfSignature[],
+  placements: Map<number, Map<string, SignaturePlacement>>,
   opacity: number = 1,
 ): Promise<void> => {
   const bytes = await file.arrayBuffer();
   const pdf = await PDFDocument.load(bytes, { ignoreEncryption: false });
 
-  let imageBytes: Uint8Array;
-  if (opacity < 1) {
-    imageBytes = await removeWhite(signatureDataUrl, 1 - opacity);
-  } else {
-    imageBytes = dataUrlToBytes(signatureDataUrl);
+  const images = new Map<string, Uint8Array>();
+  for (const sig of signatures) {
+    if (opacity < 1) {
+      images.set(sig.id, await removeWhite(sig.dataUrl, 1 - opacity));
+    } else {
+      images.set(sig.id, dataUrlToBytes(sig.dataUrl));
+    }
   }
-  const image = await pdf.embedPng(imageBytes);
+
+  const embedded = new Map<string, Awaited<ReturnType<typeof pdf.embedPng>>>();
+  for (const pagePlacements of placements.values()) {
+    for (const sigId of pagePlacements.keys()) {
+      if (!images.has(sigId) || embedded.has(sigId)) continue;
+      embedded.set(sigId, await pdf.embedPng(images.get(sigId)!));
+    }
+  }
 
   pdf.getPages().forEach((page, index) => {
-    const p = placements.get(index + 1);
-    if (!p) return;
+    const pagePlacements = placements.get(index + 1);
+    if (!pagePlacements) return;
 
     const { width: pageW, height: pageH } = page.getSize();
 
-    // Clamp placement to the page bounds.
-    const w = Math.min(p.width, pageW);
-    const h = Math.min(p.height, pageH);
-    const x = Math.max(0, Math.min(p.x, pageW - w));
-    const y = Math.max(0, Math.min(p.y, pageH - h));
+    for (const p of pagePlacements.values()) {
+      const image = embedded.get(p.signatureId);
+      if (!image) continue;
 
-    page.drawImage(image, { x, y, width: w, height: h });
+      // Clamp placement to the page bounds.
+      const w = Math.min(p.width, pageW);
+      const h = Math.min(p.height, pageH);
+      const x = Math.max(0, Math.min(p.x, pageW - w));
+      const y = Math.max(0, Math.min(p.y, pageH - h));
+
+      page.drawImage(image, { x, y, width: w, height: h });
+    }
   });
 
   const out = await pdf.save();

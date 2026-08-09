@@ -13,13 +13,21 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = PdfWorker;
 interface Props {
   file: File;
   pageNumber: number;
-  signature: string | null;
-  placement: SignaturePlacement | null;
+  signatures: { id: string; dataUrl: string }[];
+  placements: SignaturePlacement[];
+  activeSignatureId: string | null;
   preview?: boolean;
-  onPlace: (x: number, y: number) => void;
-  onMove: (x: number, y: number) => void;
-  onResize: (x: number, y: number, width: number, height: number) => void;
-  onRemove: () => void;
+  onSelect: (signatureId: string) => void;
+  onPlace: (signatureId: string, x: number, y: number) => void;
+  onMove: (signatureId: string, x: number, y: number) => void;
+  onResize: (
+    signatureId: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ) => void;
+  onRemove: (signatureId: string) => void;
 }
 
 const TARGET_WIDTH = 680;
@@ -28,9 +36,11 @@ const MIN_SIZE = 20;
 const SignaturePlaceCanvas = ({
   file,
   pageNumber,
-  signature,
-  placement,
+  signatures,
+  placements,
+  activeSignatureId,
   preview = false,
+  onSelect,
   onPlace,
   onMove,
   onResize,
@@ -40,12 +50,17 @@ const SignaturePlaceCanvas = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const viewportRef = useRef<pdfjsLib.PageViewport | null>(null);
   const dragRef = useRef<{
+    signatureId: string;
     startPdfX: number;
     startPdfY: number;
     origX: number;
     origY: number;
   } | null>(null);
-  const resizeRef = useRef<{ anchorX: number; anchorY: number } | null>(null);
+  const resizeRef = useRef<{
+    signatureId: string;
+    anchorX: number;
+    anchorY: number;
+  } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [view, setView] = useState<{
@@ -137,24 +152,27 @@ const SignaturePlaceCanvas = ({
     return () => observer.disconnect();
   }, [view?.width, view?.height]);
 
-  const hasSignatureDrag = (e: React.DragEvent<HTMLDivElement>) => {
-    if (e.dataTransfer.types.includes(SIGNATURE_DRAG_TYPE)) return true;
+  const getDragSignatureId = (e: React.DragEvent<HTMLDivElement>) => {
     try {
-      return Boolean(e.dataTransfer.getData(SIGNATURE_DRAG_TYPE));
+      return e.dataTransfer.getData(SIGNATURE_DRAG_TYPE);
     } catch {
-      return false;
+      return "";
     }
   };
 
+  const hasSignatureDrag = (e: React.DragEvent<HTMLDivElement>) =>
+    e.dataTransfer.types.includes(SIGNATURE_DRAG_TYPE);
+
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    if (preview || !signature || !hasSignatureDrag(e)) return;
+    if (preview || signatures.length === 0 || !hasSignatureDrag(e)) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "copy";
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (preview || !signature || !hasSignatureDrag(e)) return;
+    const signatureId = getDragSignatureId(e);
+    if (preview || !signatureId) return;
     const viewport = viewportRef.current;
     const canvas = canvasRef.current;
     if (!viewport || !canvas) return;
@@ -162,48 +180,52 @@ const SignaturePlaceCanvas = ({
     const px = (e.clientX - rect.left) * (canvas.width / rect.width);
     const py = (e.clientY - rect.top) * (canvas.height / rect.height);
     const [x, y] = viewport.convertToPdfPoint(px, py);
-    onPlace(x, y);
+    onPlace(signatureId, x, y);
   };
 
   const handleDragStart = useCallback(
-    (e: React.PointerEvent) => {
-      if (!placement || !view) return;
-      const container = containerRef.current;
+    (e: React.PointerEvent, signatureId: string) => {
+      if (!view) return;
+      const p = placements.find((x) => x.signatureId === signatureId);
       const canvas = canvasRef.current;
-      if (!container || !canvas) return;
+      if (!p || !canvas) return;
       e.preventDefault();
       e.stopPropagation();
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
-      const rect = container.getBoundingClientRect();
+      const rect = containerRef.current!.getBoundingClientRect();
       const px = (e.clientX - rect.left) * (canvas.width / rect.width);
       const py = (e.clientY - rect.top) * (canvas.height / rect.height);
       const [pdfX, pdfY] = view.viewport.convertToPdfPoint(px, py);
       dragRef.current = {
+        signatureId,
         startPdfX: pdfX,
         startPdfY: pdfY,
-        origX: placement.x,
-        origY: placement.y,
+        origX: p.x,
+        origY: p.y,
       };
+      onSelect(signatureId);
       setIsDragging(true);
     },
-    [placement, view],
+    [view, placements, onSelect],
   );
 
   const handleDragMove = useCallback(
     (e: React.PointerEvent) => {
       if (!dragRef.current || !view) return;
-      const container = containerRef.current;
+      const p = placements.find(
+        (x) => x.signatureId === dragRef.current!.signatureId,
+      );
       const canvas = canvasRef.current;
-      if (!container || !canvas) return;
-      const rect = container.getBoundingClientRect();
+      if (!p || !canvas) return;
+      const rect = containerRef.current!.getBoundingClientRect();
       const px = (e.clientX - rect.left) * (canvas.width / rect.width);
       const py = (e.clientY - rect.top) * (canvas.height / rect.height);
       const [pdfX, pdfY] = view.viewport.convertToPdfPoint(px, py);
       const newX = dragRef.current.origX + (pdfX - dragRef.current.startPdfX);
       const newY = dragRef.current.origY + (pdfY - dragRef.current.startPdfY);
-      onMove(newX, newY);
+      onMove(p.signatureId, newX, newY);
     },
-    [view, onMove],
+    [view, placements, onMove],
   );
 
   const handleDragEnd = useCallback(() => {
@@ -212,27 +234,33 @@ const SignaturePlaceCanvas = ({
   }, []);
 
   const handleResizeStart = useCallback(
-    (e: React.PointerEvent) => {
-      if (!placement || !view) return;
+    (e: React.PointerEvent, signatureId: string) => {
+      if (!view) return;
+      const p = placements.find((x) => x.signatureId === signatureId);
+      if (!p) return;
       e.preventDefault();
       e.stopPropagation();
       e.currentTarget.setPointerCapture(e.pointerId);
       resizeRef.current = {
-        anchorX: placement.x,
-        anchorY: placement.y + placement.height,
+        signatureId,
+        anchorX: p.x,
+        anchorY: p.y + p.height,
       };
+      onSelect(signatureId);
       setIsResizing(true);
     },
-    [placement, view],
+    [view, placements, onSelect],
   );
 
   const handleResizeMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!resizeRef.current || !view || !placement) return;
-      const container = containerRef.current;
+      if (!resizeRef.current || !view) return;
+      const p = placements.find(
+        (x) => x.signatureId === resizeRef.current!.signatureId,
+      );
       const canvas = canvasRef.current;
-      if (!container || !canvas) return;
-      const rect = container.getBoundingClientRect();
+      if (!p || !canvas) return;
+      const rect = containerRef.current!.getBoundingClientRect();
       const px = (e.clientX - rect.left) * (canvas.width / rect.width);
       const py = (e.clientY - rect.top) * (canvas.height / rect.height);
       const [pdfX, pdfY] = view.viewport.convertToPdfPoint(px, py);
@@ -240,9 +268,15 @@ const SignaturePlaceCanvas = ({
       const minPdf = MIN_SIZE / view.scale;
       const width = Math.max(minPdf, pdfX - anchorX);
       const height = Math.max(minPdf, anchorY - pdfY);
-      onResize(anchorX, anchorY - height, width, height);
+      onResize(
+        resizeRef.current.signatureId,
+        anchorX,
+        anchorY - height,
+        width,
+        height,
+      );
     },
-    [view, placement, onResize],
+    [view, placements, onResize],
   );
 
   const handleResizeEnd = useCallback(() => {
@@ -250,20 +284,34 @@ const SignaturePlaceCanvas = ({
     setIsResizing(false);
   }, []);
 
-  let overlay: { left: number; top: number; width: number; height: number } | null =
-    null;
-  if (placement && signature && view) {
-    const [left, top] = view.viewport.convertToViewportPoint(
-      placement.x,
-      placement.y + placement.height,
-    );
-    const { sx, sy } = displayScale;
-    overlay = {
-      left: left * sx,
-      top: top * sy,
-      width: placement.width * view.scale * sx,
-      height: placement.height * view.scale * sy,
-    };
+  const overlays: {
+    signatureId: string;
+    dataUrl: string;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    active: boolean;
+  }[] = [];
+  if (view) {
+    for (const p of placements) {
+      const sig = signatures.find((s) => s.id === p.signatureId);
+      if (!sig) continue;
+      const [left, top] = view.viewport.convertToViewportPoint(
+        p.x,
+        p.y + p.height,
+      );
+      const { sx, sy } = displayScale;
+      overlays.push({
+        signatureId: p.signatureId,
+        dataUrl: sig.dataUrl,
+        left: left * sx,
+        top: top * sy,
+        width: p.width * view.scale * sx,
+        height: p.height * view.scale * sy,
+        active: p.signatureId === activeSignatureId,
+      });
+    }
   }
 
   return (
@@ -271,7 +319,9 @@ const SignaturePlaceCanvas = ({
       ref={containerRef}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className={`relative rounded-xl shadow-sm ${signature ? "cursor-copy" : ""}`}
+      className={`relative rounded-xl shadow-sm ${
+        signatures.length > 0 ? "cursor-copy" : ""
+      }`}
     >
       <canvas
         ref={canvasRef}
@@ -279,73 +329,85 @@ const SignaturePlaceCanvas = ({
         style={{ width: view?.width, height: view?.height }}
       />
 
-      {overlay &&
-        (preview ? (
+      {overlays.map((o) =>
+        preview ? (
           <div
+            key={o.signatureId}
             className="absolute pointer-events-none"
             style={{
-              left: overlay.left,
-              top: overlay.top,
-              width: overlay.width,
-              height: overlay.height,
+              left: o.left,
+              top: o.top,
+              width: o.width,
+              height: o.height,
             }}
           >
             <img
-              src={signature!}
+              src={o.dataUrl}
               alt="Signature"
               className="w-full h-full object-fill block"
             />
           </div>
         ) : (
           <div
-            className="absolute border-2 border-dashed border-brand-500 bg-brand-500/10 overflow-visible group touch-none select-none"
+            key={o.signatureId}
+            className={`absolute overflow-visible group touch-none select-none ${
+              o.active
+                ? "border-2 border-dashed border-brand-500 bg-brand-500/10"
+                : "border border-brand-400/70 bg-brand-500/5 hover:bg-brand-500/10"
+            }`}
             style={{
-              left: overlay.left,
-              top: overlay.top,
-              width: overlay.width,
-              height: overlay.height,
+              left: o.left,
+              top: o.top,
+              width: o.width,
+              height: o.height,
+              zIndex: o.active ? 10 : 5,
               cursor: isDragging ? "grabbing" : isResizing ? "nwse-resize" : "grab",
             }}
-            onPointerDown={handleDragStart}
+            onPointerDown={(e) => handleDragStart(e, o.signatureId)}
             onPointerMove={handleDragMove}
             onPointerUp={handleDragEnd}
           >
             <img
-              src={signature!}
+              src={o.dataUrl}
               alt="Signature"
               className="w-full h-full object-fill block pointer-events-none"
             />
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove();
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              aria-label="Remove signature"
-              className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center hover:bg-red-600 cursor-pointer transition shadow-md"
-            >
-              <FontAwesomeIcon icon={faXmark} />
-            </button>
-            <span
-              role="button"
-              tabIndex={0}
-              aria-label="Resize signature"
-              className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-brand-600 rounded-sm cursor-nwse-resize touch-none border border-white"
-              onPointerDown={handleResizeStart}
-              onPointerMove={handleResizeMove}
-              onPointerUp={handleResizeEnd}
-            />
+            {o.active && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove(o.signatureId);
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  aria-label="Remove signature"
+                  className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center hover:bg-red-600 cursor-pointer transition shadow-md"
+                >
+                  <FontAwesomeIcon icon={faXmark} />
+                </button>
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Resize signature"
+                  className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-brand-600 rounded-sm cursor-nwse-resize touch-none border border-white"
+                  onPointerDown={(e) => handleResizeStart(e, o.signatureId)}
+                  onPointerMove={handleResizeMove}
+                  onPointerUp={handleResizeEnd}
+                />
+              </>
+            )}
           </div>
-        ))}
+        ),
+      )}
 
-      {!preview && placement && signature && (
+      {!preview && placements.length > 0 && (
         <p className="absolute top-2 left-2 px-2 py-1 rounded-md bg-gray-900/70 text-white text-xs pointer-events-none">
           Drag to move · resize the corner · click ✕ to remove
         </p>
       )}
 
-      {!preview && !placement && signature && (
+      {!preview && placements.length === 0 && signatures.length > 0 && (
         <p className="absolute top-2 left-2 px-2 py-1 rounded-md bg-gray-900/70 text-white text-xs pointer-events-none">
           Drag your signature here to place it
         </p>
