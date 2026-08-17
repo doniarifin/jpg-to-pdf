@@ -40,8 +40,8 @@ const Home = () => {
     <div className="flex-1 min-h-0 overflow-y-auto md:overflow-hidden px-6 md:px-10 py-6 scroll-area">
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:h-full">
         {/* Upload + Preview */}
-        <div className="relative md:col-span-2 bg-white p-6 rounded-2xl shadow md:flex md:flex-col md:min-h-0">
-          <h2 className="text-xl font-semibold mb-4">Images to PDF</h2>
+        <div className="relative md:col-span-2 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow md:flex md:flex-col md:min-h-0">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Images to PDF</h2>
 
           {images.length === 0 && <UploadArea onChange={handleUpload} />}
 
@@ -67,18 +67,18 @@ const Home = () => {
 
         {/* RIGHT: Settings */}
         <SidePanel disabled={isDisabled} overlayText="Please choose file first">
-            <h2 className="text-xl font-semibold mb-4">Settings</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Settings</h2>
 
               {/* Orientation */}
               <div className="mb-4">
-                <label className="text-sm text-gray-500">Orientation</label>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Orientation</label>
                 <div className="flex gap-2 mt-2">
                   <button
                     onClick={() => setOrientation("portrait")}
                     className={`flex-1 p-2 rounded-lg border cursor-pointer ${
                       orientation === "portrait"
                         ? "bg-brand-600 text-white"
-                        : "bg-gray-100"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
                     }`}
                   >
                     Portrait
@@ -89,7 +89,7 @@ const Home = () => {
                     className={`flex-1 p-2 rounded-lg border cursor-pointer ${
                       orientation === "landscape"
                         ? "bg-brand-600 text-white"
-                        : "bg-gray-100"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
                     }`}
                   >
                     Landscape
@@ -98,7 +98,7 @@ const Home = () => {
               </div>
 
               <div className="mb-4">
-                <label className="text-sm text-gray-500">Page Size</label>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Page Size</label>
 
                 <div className="grid grid-cols-3 gap-2 mt-2">
                   {["a4", "letter", "legal"].map((size) => (
@@ -108,7 +108,7 @@ const Home = () => {
                       className={`p-2 rounded-lg border text-sm capitalize cursor-pointer ${
                         format === size
                           ? "bg-brand-600 text-white"
-                          : "bg-gray-100"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
                       }`}
                     >
                       {size}
@@ -119,7 +119,7 @@ const Home = () => {
 
               {/* Margin */}
               <div className="mb-6">
-                <label className="text-sm text-gray-500">
+                <label className="text-sm text-gray-500 dark:text-gray-400">
                   Margin: {margin} mm
                 </label>
 

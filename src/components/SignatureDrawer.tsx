@@ -124,7 +124,7 @@ const SignatureDrawer = ({ onSave }: Props) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <canvas
           ref={canvasRef}
           width={WIDTH}

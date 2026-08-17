@@ -113,8 +113,8 @@ const Crop = () => {
     <div className="flex-1 min-h-0 overflow-y-auto md:overflow-hidden px-6 md:px-10 py-6 scroll-area">
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:h-full">
         {/* Upload + Preview */}
-        <div className="relative md:col-span-2 bg-white p-6 rounded-2xl shadow md:flex md:flex-col md:min-h-0">
-          <h2 className="text-xl font-semibold mb-4">Crop PDF</h2>
+        <div className="relative md:col-span-2 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow md:flex md:flex-col md:min-h-0">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Crop PDF</h2>
 
           {!file && <MergeUploadArea onChange={handleUpload} />}
 
@@ -133,11 +133,11 @@ const Crop = () => {
                   type="button"
                   onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
                   disabled={pageNumber <= 1}
-                  className="px-3 py-1 rounded-lg border border-gray-300 text-sm disabled:opacity-40 cursor-pointer hover:bg-gray-100"
+                  className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-sm disabled:opacity-40 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   Prev
                 </button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
                   Page {pageNumber} / {numPages}
                 </span>
                 <button
@@ -146,14 +146,14 @@ const Crop = () => {
                     setPageNumber((p) => Math.min(numPages, p + 1))
                   }
                   disabled={pageNumber >= numPages}
-                  className="px-3 py-1 rounded-lg border border-gray-300 text-sm disabled:opacity-40 cursor-pointer hover:bg-gray-100"
+                  className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-sm disabled:opacity-40 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   Next
                 </button>
               </div>
 
               {/* Interactive crop canvas */}
-              <div className="flex-1 min-h-0 overflow-auto flex items-start justify-center rounded-xl bg-gray-100 p-4">
+              <div className="flex-1 min-h-0 overflow-auto flex items-start justify-center rounded-xl bg-gray-100 dark:bg-gray-800 p-4">
                 <CropCanvas
                   file={file}
                   pageNumber={pageNumber}
@@ -173,7 +173,7 @@ const Crop = () => {
                     className={`relative shrink-0 rounded-md border-2 overflow-hidden transition ${
                       n === pageNumber
                         ? "border-brand-600"
-                        : "border-transparent hover:border-gray-300"
+                        : "border-transparent dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
                   >
                     <PDFThumbnail file={file} className="w-14 h-auto block" />
@@ -192,14 +192,14 @@ const Crop = () => {
 
         {/* RIGHT: Settings */}
         <SidePanel disabled={isDisabled} overlayText="Please choose a file first">
-          <h2 className="text-xl font-semibold mb-4">Crop</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Crop</h2>
 
           <p className="text-sm text-gray-500 mb-2">
             Page {pageNumber} of {numPages}
           </p>
 
           {currentCrop && pageDims ? (
-            <div className="mb-4 p-3 rounded-lg bg-gray-100 text-sm text-gray-700">
+            <div className="mb-4 p-3 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200">
               <p>
                 Size:{" "}
                 {(currentCrop.width * PT_TO_MM).toFixed(1)} ×{" "}
@@ -219,7 +219,7 @@ const Crop = () => {
           <div className="mb-6">
             <label className="text-sm text-gray-500">Apply crop to</label>
             <div className="mt-2 flex flex-col gap-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 cursor-pointer">
                 <input
                   type="radio"
                   name="crop-scope"
@@ -230,7 +230,7 @@ const Crop = () => {
                 />
                 Current page
               </label>
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 cursor-pointer">
                 <input
                   type="radio"
                   name="crop-scope"

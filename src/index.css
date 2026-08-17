@@ -14,6 +14,14 @@
   --color-success-700: #1a6e1a;
 }
 
+/*
+ * Dark mode is driven by the `data-theme` attribute on <html>.
+ * The `@media (prefers-color-scheme: dark)` block below is used only as a
+ * fallback before JavaScript runs (it matches the OS preference). Once the
+ * app mounts, `useDarkMode` always sets `data-theme` explicitly, so the
+ * user's choice (stored in localStorage) overrides the OS preference.
+ */
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -47,7 +55,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --text: #9ca3af;
     /* --text-h: #f3f4f6; */
     --bg: #16171d;
@@ -63,6 +71,112 @@
 
   #social .button-icon {
     filter: invert(1) brightness(2);
+  }
+}
+
+/* Force dark theme when the user toggles it on. */
+:root[data-theme="dark"] {
+  --text: #9ca3af;
+  /* --text-h: #f3f4f6; */
+  --bg: #16171d;
+  --border: #2e303a;
+  --code-bg: #1f2028;
+  --accent: #c084fc;
+  --accent-bg: rgba(192, 132, 252, 0.15);
+  --accent-border: rgba(192, 132, 252, 0.5);
+  --social-bg: rgba(47, 48, 58, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+}
+
+/* Force light theme when the user toggles it off (overrides OS dark preference). */
+:root[data-theme="light"] {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+}
+
+/* Make Tailwind's `dark:` variant respond to our `data-theme` attribute
+ * instead of the `.dark` class. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Global dark-mode overrides for the many hardcoded Tailwind color classes
+ * used across the app (e.g. `text-gray-600`, `bg-gray-100`, `border-gray-300`).
+ * Instead of editing every occurrence, we remap those classes when the user
+ * has toggled dark mode on.
+ */
+:root[data-theme="dark"] {
+  /* Neutral text colors */
+  .text-gray-50 { color: #e5e4e7; }
+  .text-gray-100 { color: #f3f4f6; }
+  .text-gray-200 { color: #e5e7eb; }
+  .text-gray-300 { color: #d1d5db; }
+  .text-gray-400 { color: #9ca3af; }
+  .text-gray-500 { color: #9ca3af; }
+  .text-gray-600 { color: #9ca3af; }
+  .text-gray-700 { color: #d1d5db; }
+  .text-gray-800 { color: #e5e7eb; }
+  .text-gray-900 { color: #f3f4f6; }
+
+  /* Neutral backgrounds */
+  .bg-gray-50 { background-color: #1f2028; }
+  .bg-gray-100 { background-color: #11121a; }
+  .bg-gray-200 { background-color: #16171d; }
+  .bg-gray-300 { background-color: #2a2b36; }
+  .bg-gray-400 { background-color: #3a3b48; }
+  .bg-gray-500 { background-color: #4b4c5c; }
+  .bg-gray-600 { background-color: #5b5c6e; }
+  .bg-gray-700 { background-color: #2e303a; }
+  .bg-gray-800 { background-color: #1b1c24; }
+  .bg-gray-900 { background-color: #11121a; }
+  .bg-gray-950 { background-color: #0a0b0f; }
+
+  /* Neutral borders */
+  .border-gray-100 { border-color: #2e303a; }
+  .border-gray-200 { border-color: #2e303a; }
+  .border-gray-300 { border-color: #3a3b48; }
+  .border-gray-400 { border-color: #4b4c5c; }
+  .border-gray-500 { border-color: #5b5c6e; }
+  .border-gray-600 { border-color: #6b6c7e; }
+  .border-gray-700 { border-color: #7b7c8e; }
+  .border-gray-800 { border-color: #8b8c9e; }
+  .border-gray-900 { border-color: #9b9cae; }
+
+  /* Hover states */
+  .hover\:bg-gray-50:hover { background-color: #1f2028; }
+  .hover\:bg-gray-100:hover { background-color: #16171d; }
+  .hover\:bg-gray-200:hover { background-color: #11121a; }
+  .hover\:bg-gray-300:hover { background-color: #2a2b36; }
+  .hover\:bg-gray-400:hover { background-color: #3a3b48; }
+  .hover\:bg-gray-500:hover { background-color: #4b4c5c; }
+  .hover\:bg-gray-600:hover { background-color: #5b5c6e; }
+  .hover\:bg-gray-700:hover { background-color: #2e303a; }
+  .hover\:bg-gray-800:hover { background-color: #1b1c24; }
+  .hover\:bg-gray-900:hover { background-color: #11121a; }
+
+  .hover\:text-gray-50:hover { color: #e5e4e7; }
+  .hover\:text-gray-100:hover { color: #f3f4f6; }
+  .hover\:text-gray-200:hover { color: #e5e7eb; }
+  .hover\:text-gray-300:hover { color: #d1d5db; }
+  .hover\:text-gray-400:hover { color: #9ca3af; }
+  .hover\:text-gray-500:hover { color: #9ca3af; }
+  .hover\:text-gray-600:hover { color: #9ca3af; }
+  .hover\:text-gray-700:hover { color: #d1d5db; }
+  .hover\:text-gray-800:hover { color: #e5e7eb; }
+  .hover\:text-gray-900:hover { color: #f3f4f6; }
+
+  /* Canvas thumbnails should stay white so PDFs render correctly */
+  canvas {
+    background-color: #fff !important;
   }
 }
 

@@ -47,8 +47,8 @@ const Merge = () => {
     <div className="flex-1 min-h-0 overflow-y-auto md:overflow-hidden px-6 md:px-10 py-6 scroll-area">
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:h-full">
         {/* Upload + List */}
-        <div className="relative md:col-span-2 bg-white p-6 rounded-2xl shadow md:flex md:flex-col md:min-h-0">
-          <h2 className="text-xl font-semibold mb-4">Merge PDF</h2>
+        <div className="relative md:col-span-2 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow md:flex md:flex-col md:min-h-0">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Merge PDF</h2>
 
           {pdfs.length === 0 && <MergeUploadArea onChange={handleUpload} />}
 
@@ -67,19 +67,19 @@ const Merge = () => {
 
         {/* RIGHT: Actions */}
         <SidePanel disabled={isEmpty} overlayText="Please choose files first">
-            <h2 className="text-xl font-semibold mb-4">Merge</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Merge</h2>
 
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                 Files will be combined in the order shown on the left. Drag
                 cards to reorder.
               </p>
 
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 {pdfs.length} file{pdfs.length === 1 ? "" : "s"} selected
               </p>
 
               {error && (
-                <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
                   {error}
                 </div>
               )}

@@ -34,7 +34,7 @@ export default function SortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white shadow-lg relative group"
+className="bg-white dark:bg-gray-800 shadow-lg relative group"
     >
       {/* Delete Button */}
       <button
@@ -43,15 +43,15 @@ export default function SortableItem({
           onDelete();
         }}
         className="
-          absolute 
+          absolute
           top-1
-          right-1 
+          right-1
           z-10
-          w-6 
+          w-6
           h-6
           rounded-full
-          bg-gray-100
-          border border-gray-300
+          bg-gray-100 dark:bg-gray-700
+          border border-gray-300 dark:border-gray-600
           flex items-center justify-center
           shadow-[0_2px_4px_rgba(0,0,0,0.1)]
           hover:bg-red-500
@@ -72,7 +72,7 @@ export default function SortableItem({
       >
         {/* Margin */}
         <div
-          className="absolute inset-0 border-2 border-dashed border-gray-300"
+          className="absolute inset-0 border-2 border-dashed border-gray-300 dark:border-gray-600"
           style={{ margin: `${margin}px` }}
         />
 

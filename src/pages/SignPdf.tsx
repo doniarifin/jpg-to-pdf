@@ -262,8 +262,8 @@ const SignPdf = () => {
     <div className="flex-1 min-h-0 overflow-y-auto md:overflow-hidden px-6 md:px-10 py-6 scroll-area">
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:h-full">
         {/* Upload + Preview */}
-        <div className="relative md:col-span-2 bg-white p-6 rounded-2xl shadow md:flex md:flex-col md:min-h-0">
-          <h2 className="text-xl font-semibold mb-4">Sign PDF</h2>
+        <div className="relative md:col-span-2 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow md:flex md:flex-col md:min-h-0">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Sign PDF</h2>
 
           {!file && (
             <MergeUploadArea
@@ -288,11 +288,11 @@ const SignPdf = () => {
                     type="button"
                     onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
                     disabled={pageNumber <= 1}
-                    className="px-3 py-1 rounded-lg border border-gray-300 text-sm disabled:opacity-40 cursor-pointer hover:bg-gray-100"
+                    className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-sm disabled:opacity-40 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     Prev
                   </button>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
                     Page {pageNumber} / {numPages}
                   </span>
                   <button
@@ -301,7 +301,7 @@ const SignPdf = () => {
                       setPageNumber((p) => Math.min(numPages, p + 1))
                     }
                     disabled={pageNumber >= numPages}
-                    className="px-3 py-1 rounded-lg border border-gray-300 text-sm disabled:opacity-40 cursor-pointer hover:bg-gray-100"
+                    className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-sm disabled:opacity-40 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     Next
                   </button>
@@ -311,7 +311,7 @@ const SignPdf = () => {
                     className={`px-3 py-1 rounded-lg border text-sm cursor-pointer transition ${
                       previewMode
                         ? "bg-brand-600 text-white border-brand-600 hover:bg-brand-700"
-                        : "border-gray-300 hover:bg-gray-100"
+                        : "border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                   >
                     {previewMode ? "Exit preview" : "Preview result"}
@@ -319,7 +319,7 @@ const SignPdf = () => {
                 </div>
 
                 {/* Interactive preview */}
-                <div className="flex-1 min-h-0 overflow-auto flex items-start justify-center rounded-xl bg-gray-100 p-4">
+                <div className="flex-1 min-h-0 overflow-auto flex items-start justify-center rounded-xl bg-gray-100 dark:bg-gray-800 p-4">
                   <SignaturePlaceCanvas
                     file={file}
                     pageNumber={pageNumber}
@@ -348,7 +348,7 @@ const SignPdf = () => {
                       className={`relative shrink-0 rounded-md border-2 overflow-hidden transition ${
                         n === pageNumber
                           ? "border-brand-600"
-                          : "border-transparent hover:border-gray-300"
+                          : "border-transparent dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                       }`}
                     >
                       <PDFThumbnail file={file} className="w-14 h-auto block" />
@@ -367,16 +367,16 @@ const SignPdf = () => {
 
         {/* RIGHT: Signature settings */}
         <SidePanel disabled={isDisabled} overlayText="Please choose a file first">
-          <h2 className="text-xl font-semibold mb-4">Signature</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Signature</h2>
 
           {drawerOpen && (
             <div className="flex flex-col">
               <SignatureDrawer onSave={addSignature} />
 
               <div className="my-4 flex items-center gap-3">
-                <span className="h-px flex-1 bg-gray-200" />
+                <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
                 <span className="text-xs text-gray-400">or</span>
-                <span className="h-px flex-1 bg-gray-200" />
+                <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
               </div>
 
               <Button
@@ -409,10 +409,10 @@ const SignPdf = () => {
                   <div
                     key={sig.id}
                     onClick={() => setActiveSignatureId(sig.id)}
-                    className={`p-3 rounded-xl bg-white border transition cursor-pointer ${
+                    className={`p-3 rounded-xl bg-white dark:bg-gray-800 border transition cursor-pointer ${
                       sig.id === activeSignatureId
                         ? "border-brand-600 ring-1 ring-brand-600"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
                   >
                     <div
@@ -435,7 +435,7 @@ const SignPdf = () => {
                         src={previewUrls.get(sig.id) ?? sig.dataUrl}
                         alt="Signature"
                         draggable={false}
-                        className="w-28 h-auto bg-white rounded border border-gray-200 pointer-events-none"
+                        className="w-28 h-auto bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600 pointer-events-none"
                       />
                     </div>
                     <p className="mt-2 text-center text-xs font-medium text-brand-700 pointer-events-none">
@@ -532,7 +532,7 @@ const SignPdf = () => {
             </Button>
           )}
 
-          <p className="mt-4 text-sm text-gray-600">
+          <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
             {signedCount} of {numPages} page
             {signedCount === 1 ? "" : "s"} signed · {totalPlacements} signature
             {totalPlacements === 1 ? "" : "s"} placed

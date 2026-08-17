@@ -1,13 +1,13 @@
 function Footer() {
   return (
-    <footer className="bg-white border-t border-gray-200 py-4 px-6 md:px-10">
-      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-gray-500">
+    <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-4 px-6 md:px-10">
+      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-gray-500 dark:text-gray-400">
         <p>&copy; {new Date().getFullYear()} inodd</p>
         <a
           href="https://github.com/doniarifin/pdf-toolkit"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-gray-700 transition"
+          className="hover:text-gray-700 dark:hover:text-gray-200 transition"
           aria-label="Source Code"
         >
           <svg

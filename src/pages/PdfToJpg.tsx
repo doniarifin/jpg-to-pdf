@@ -66,8 +66,8 @@ const PdfToJpg = () => {
     <div className="flex-1 min-h-0 overflow-y-auto md:overflow-hidden px-6 md:px-10 py-6 scroll-area">
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:h-full">
         {/* Upload + Preview */}
-        <div className="relative md:col-span-2 bg-white p-6 rounded-2xl shadow md:flex md:flex-col md:min-h-0">
-          <h2 className="text-xl font-semibold mb-4">PDF to JPG</h2>
+        <div className="relative md:col-span-2 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow md:flex md:flex-col md:min-h-0">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">PDF to JPG</h2>
 
           {pdfs.length === 0 && <MergeUploadArea onChange={handleUpload} />}
 
@@ -79,11 +79,11 @@ const PdfToJpg = () => {
 
           <ScrollArea className="md:flex-1 md:min-h-0 mt-4">
             {pdfs.length > 0 && (
-              <div className="bg-gray-200 p-4 rounded-xl mt-4 flex flex-wrap gap-3 justify-center">
+              <div className="bg-gray-200 dark:bg-gray-800 p-4 rounded-xl mt-4 flex flex-wrap gap-3 justify-center">
                 {pdfs.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white shadow-lg rounded-xl relative group w-40"
+                    className="bg-white dark:bg-gray-800 shadow-lg rounded-xl relative group w-40"
                   >
                     {/* Delete Button */}
                     <button
@@ -100,8 +100,8 @@ const PdfToJpg = () => {
                         w-6
                         h-6
                         rounded-full
-                        bg-gray-100
-                        border border-gray-300
+                        bg-gray-100 dark:bg-gray-700
+                        border border-gray-300 dark:border-gray-600
                         flex items-center justify-center
                         shadow-[0_2px_4px_rgba(0,0,0,0.1)]
                         hover:bg-red-500
@@ -115,13 +115,13 @@ const PdfToJpg = () => {
                     </button>
 
                     <div className="p-4 flex flex-col items-center">
-                      <div className="w-full mb-3 flex items-center justify-center h-32 overflow-hidden rounded-md bg-gray-50">
+                      <div className="w-full mb-3 flex items-center justify-center h-32 overflow-hidden rounded-md bg-gray-50 dark:bg-gray-800">
                         <PDFThumbnail
                           file={item.file}
                           className="h-32 w-auto object-contain"
                         />
                       </div>
-                      <p className="text-sm text-gray-700 font-medium truncate max-w-full">
+                      <p className="text-sm text-gray-700 dark:text-gray-200 font-medium truncate max-w-full">
                         {item.file.name}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
@@ -139,7 +139,7 @@ const PdfToJpg = () => {
 
         {/* RIGHT: Settings */}
         <SidePanel disabled={isDisabled} overlayText="Please choose a file first">
-            <h2 className="text-xl font-semibold mb-4">Settings</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Settings</h2>
 
             {/* Quality */}
             <div className="mb-6">
@@ -152,7 +152,7 @@ const PdfToJpg = () => {
                     className={`p-3 rounded-lg border text-left cursor-pointer transition ${
                       quality === opt.value
                         ? "bg-brand-600 text-white border-brand-600"
-                        : "bg-gray-100 border-gray-200"
+                        : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                     }`}
                   >
                     <span className="block font-medium">{opt.label}</span>

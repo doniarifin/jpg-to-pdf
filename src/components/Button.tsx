@@ -22,8 +22,8 @@ const variants: Record<ButtonVariant, string> = {
     "bg-brand-600 text-gray-200 hover:bg-brand-700 active:scale-95 shadow-md",
   secondary:
     "bg-success-600 text-gray-200 hover:bg-success-700 active:scale-95 shadow-md",
-  gray: "bg-gray-200 text-gray-800 hover:bg-gray-300 active:scale-95",
-  ghost: "bg-transparent text-gray-700 hover:bg-gray-100 active:scale-95",
+  gray: "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 active:scale-95",
+  ghost: "bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-95",
 };
 
 const Button: React.FC<ButtonProps> = ({
@@ -41,7 +41,7 @@ const Button: React.FC<ButtonProps> = ({
         ${baseStyle}
         ${sizes[size]}
         ${variants[variant]}
-        ${className}   // ⬅️ ini kuncinya
+        ${className}
         ${disabled || loading ? "opacity-50 cursor-not-allowed" : ""}
       `}
       disabled={disabled || loading}

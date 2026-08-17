@@ -24,7 +24,7 @@ export default function SortablePDFItem({ id, file, index, onDelete }: Props) {
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white shadow-lg rounded-xl relative group w-40"
+      className="bg-white dark:bg-gray-800 shadow-lg rounded-xl relative group w-40"
     >
       {/* Delete Button */}
       <button
@@ -40,8 +40,8 @@ export default function SortablePDFItem({ id, file, index, onDelete }: Props) {
           w-6
           h-6
           rounded-full
-          bg-gray-100
-          border border-gray-300
+          bg-gray-100 dark:bg-gray-700
+          border border-gray-300 dark:border-gray-600
           flex items-center justify-center
           shadow-[0_2px_4px_rgba(0,0,0,0.1)]
           hover:bg-red-500
@@ -60,19 +60,19 @@ export default function SortablePDFItem({ id, file, index, onDelete }: Props) {
         {...listeners}
         className="cursor-grab active:cursor-grabbing p-4 flex flex-col items-center"
       >
-        <div className="w-full mb-3 flex items-center justify-center h-32 overflow-hidden rounded-md bg-gray-50">
+        <div className="w-full mb-3 flex items-center justify-center h-32 overflow-hidden rounded-md bg-gray-50 dark:bg-gray-800">
           <PDFThumbnail file={file} className="h-32 w-auto object-contain" />
         </div>
-        <p className="text-sm text-gray-700 font-medium truncate max-w-full">
+        <p className="text-sm text-gray-700 dark:text-gray-200 font-medium truncate max-w-full">
           {file.name}
         </p>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
           {(file.size / 1024).toFixed(0)} KB
         </p>
       </div>
 
       {/* Index badge */}
-      <span className="absolute top-2 left-2 text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+      <span className="absolute top-2 left-2 text-xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
         #{index + 1}
       </span>
     </div>
